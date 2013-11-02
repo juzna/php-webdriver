@@ -8,6 +8,8 @@ It works fully asynchronously thanks to *Promises* and *React*.
 
 And it works best with *Cooperative Multitasking* [4]_ and *Flow framework* [5]_.
 
+**Status**: proof of concept
+
 
 PHP WebDriver
 =============
