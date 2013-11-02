@@ -14,7 +14,7 @@ $dnsResolver = $dnsFactory->createCached("8.8.8.8", $eventLoop);
 $httpClientFactory = new React\HttpClient\Factory();
 $httpClient = $httpClientFactory->create($eventLoop, $dnsResolver);
 
-Flow\Flow::$eventLoop = $eventLoop;
+Flow\Flow::register(new Flow\Schedulers\HorizontalScheduler($eventLoop));
 
 
 flow(function() {
