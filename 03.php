@@ -42,6 +42,18 @@ flow(
 
 		echo "Done\n";
 	},
+
+	// coroutine C
+	function() {
+		$wd = new WebDriver\WebDriver("http://127.0.0.1:4444/wd/hub");
+		$session = (yield $wd->session());
+		yield $session->open('http://localhost/php-webdriver/page.php');
+
+		$el = (yield $session->element('class name', 'seznam'));
+		yield $el->click();
+
+		echo "Done\n";
+	},
 ]
 );
 
