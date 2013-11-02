@@ -27,7 +27,8 @@
         "ext-curl": "*",
         "react/promise": "@dev",
         "react/react": "dev-master",
-	    "juzna/flowphp": "dev-master"
+	    "juzna/flowphp": "dev-master",
+        "cboden/Ratchet": "*"
     },
     "autoload": {
         "psr-0": {
