@@ -1,6 +1,16 @@
-============================
-PHP WebDriver for Selenium 2
-============================
+==========================================
+PHP WebDriver for Selenium 2 with Promises
+==========================================
+
+This is a asynchronous fork of *PHP WebDriver for Selenium 2*.
+
+It works fully asynchronously thanks to *Promises* and *React*.
+
+And it works best with *Cooperative Multitasking* [4]_ and *Flow framework* [5]_.
+
+
+PHP WebDriver
+=============
 
 This fork is based on Facebook's original php-webdriver project by Justin Bishop (now being re-written). [1]_
 
@@ -27,3 +37,5 @@ Notes
 .. [1] https://github.com/facebook/php-webdriver/
 .. [2] http://code.google.com/p/selenium/wiki/JsonWireProtocol
 .. [3] http://phpdoc.org/
+.. [4] https://gist.github.com/juzna/7194037
+.. [5] https://github.com/juzna/flowphp
