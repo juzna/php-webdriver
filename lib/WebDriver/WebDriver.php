@@ -22,6 +22,8 @@
 
 namespace WebDriver;
 
+use React\Promise\PromiseInterface;
+
 /**
  * WebDriver class
  *
@@ -48,7 +50,7 @@ final class WebDriver extends AbstractWebDriver
      * @param array|string $requiredCapabilities Required capabilities (or browser name)
      * @param array        $desiredCapabilities  Desired capabilities
      *
-     * @return \WebDriver\Session
+     * @return PromiseInterface<\WebDriver\Session>
      */
     public function session($requiredCapabilities = Browser::FIREFOX, $desiredCapabilities = array())
     {
@@ -69,30 +71,31 @@ final class WebDriver extends AbstractWebDriver
             $parameters['requiredCapabilities'] = $requiredCapabilities;
         }
 
-        $results = $this->curl(
+        return $this->curl(
             'POST',
             '/session',
             $parameters,
             array(CURLOPT_FOLLOWLOCATION => true)
-        );
-
-        return new Session($results['sessionUrl']);
+        )->then(function($curlResults) {
+	        return new Session($curlResults['sessionUrl']);
+	    });
     }
 
     /**
      * Get list of currently active sessions
      *
-     * @return array an array of \WebDriver\Session objects
+     * @return PromiseInterface<Session[]> an array of \WebDriver\Session objects
      */
     public function sessions()
     {
-        $result   = $this->curl('GET', '/sessions');
-        $sessions = array();
+        return $this->curl('GET', '/sessions')->then(function($result) {
+	        $sessions = array();
 
-        foreach ($result['value'] as $session) {
-            $sessions[] = new Session($this->url . '/session/' . $session['id']);
-        }
+	        foreach ($result['value'] as $session) {
+	            $sessions[] = new Session($this->url . '/session/' . $session['id']);
+	        }
 
-        return $sessions;
+	        return $sessions;
+        });
     }
 }

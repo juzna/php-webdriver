@@ -22,6 +22,8 @@
 
 namespace WebDriver;
 
+use React\Promise\PromiseInterface;
+
 /**
  * WebDriver\Session class
  *
@@ -120,37 +122,37 @@ final class Session extends Container
      *
      * @param string $url
      *
-     * @return \WebDriver\Session
+     * @return PromiseInterface<\WebDriver\Session>
      */
     public function open($url)
     {
-        $this->curl('POST', '/url', array('url' => $url));
-
-        return $this;
+        return $this->curl('POST', '/url', array('url' => $url))->then(function() {
+	        return $this;
+        } );
     }
 
     /**
      * Get browser capabilities: /session/:sessionId (GET)
      *
-     * @return mixed
+     * @return PromiseInterface<mixed>
      */
     public function capabilities()
     {
-        $result = $this->curl('GET', '');
-
-        return $result['value'];
+        return $this->curl('GET', '')->then(function($result) {
+            return $result['value'];
+        });
     }
 
     /**
      * Close session: /session/:sessionId (DELETE)
      *
-     * @return mixed
+     * @return PromiseInterface<mixed>
      */
     public function close()
     {
-        $result = $this->curl('DELETE', '');
-
-        return $result['value'];
+	    return $this->curl('DELETE', '')->then(function($result) {
+	        return $result['value'];
+        });
     }
 
     // There's a limit to our ability to exploit the dynamic nature of PHP when it

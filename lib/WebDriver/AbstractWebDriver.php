@@ -24,6 +24,8 @@
 
 namespace WebDriver;
 
+use React\HttpClient\Client;
+use React\Promise\PromiseInterface;
 use WebDriver\Exception as WebDriverException;
 
 /**
@@ -39,6 +41,9 @@ abstract class AbstractWebDriver
      * @var string
      */
     protected $url;
+
+	/** @var Client */
+	protected $client;
 
     /**
      * Return array of supported method names and corresponding HTTP request methods
@@ -65,6 +70,7 @@ abstract class AbstractWebDriver
     public function __construct($url = 'http://localhost:4444/wd/hub')
     {
         $this->url = $url;
+	    $this->client = $GLOBALS['httpClient'];
     }
 
     /**
@@ -96,7 +102,7 @@ abstract class AbstractWebDriver
      *                              If a number or string, "/$params" is appended to url
      * @param array  $extraOptions  key=>value pairs of curl options to pass to curl_setopt()
      *
-     * @return array array('value' => ..., 'info' => ...)
+     * @return PromiseInterface<array> array('value' => ..., 'info' => ...)
      *
      * @throws \WebDriver\Exception if error
      */
@@ -116,42 +122,68 @@ abstract class AbstractWebDriver
 
         $url = sprintf('%s%s', $this->url, $command);
 
-        if ($parameters && (is_int($parameters) || is_string($parameters))) {
-            $url .= '/' . $parameters;
+	    $headers = [
+		    'Accept' => 'application/json;charset=UTF-8',
+	    ];
+
+	    if ($parameters) {
+	        if (is_int($parameters) || is_string($parameters)) {
+	            $url .= '/' . $parameters;
+		        $parameters = NULL;
+
+	        } elseif (is_array($parameters)) {
+		        $parameters = json_encode($parameters);
+		        $headers += [
+			        'Content-Type' => 'application/json',
+			        'Content-Length' => strlen($parameters),
+		        ];
+
+	        } else {
+		        throw new \Exception("unexpected parameters type");
+	        }
         }
 
-        list($rawResults, $info) = ServiceFactory::getInstance()->getService('service.curl')->execute($requestMethod, $url, $parameters, $extraOptions);
+	    unset ($extraOptions[CURLOPT_FOLLOWLOCATION]); // implicit
+	    if ($extraOptions) { // TODO
+		    user_error('Extra options are not supported', E_USER_WARNING);
+	    }
 
-        $results = json_decode($rawResults, true);
-        $value   = null;
+	    return $this->client->request($requestMethod, $url, $parameters, $headers)->then(function($results) use ($url) {
+		    /** @var \React\HttpClient\Response $response */
+		    list($rawResults, $response) = $results;
 
-        if (is_array($results) && array_key_exists('value', $results)) {
-            $value = $results['value'];
-        }
 
-        $message = null;
+		    $results = json_decode($rawResults, true);
+		    $value   = null;
 
-        if (is_array($value) && array_key_exists('message', $value)) {
-            $message = $value['message'];
-        }
+		    if (is_array($results) && array_key_exists('value', $results)) {
+			    $value = $results['value'];
+		    }
 
-        // if not success, throw exception
-        if ((int) $results['status'] !== 0) {
-            throw WebDriverException::factory($results['status'], $message);
-        }
+		    $message = null;
 
-        $sessionId = isset($results['sessionId'])
-                   ? $results['sessionId']
-                   : (isset($value['webdriver.remote.sessionid'])
-                   ? $value['webdriver.remote.sessionid']
-                   : null);
+		    if (is_array($value) && array_key_exists('message', $value)) {
+			    $message = $value['message'];
+		    }
 
-        return array(
-            'value'      => $value,
-            'info'       => $info,
-            'sessionId'  => $sessionId,
-            'sessionUrl' => $sessionId ? $this->url . '/session/' . $sessionId : $info['url'],
-        );
+		    // if not success, throw exception
+		    if ((int) $results['status'] !== 0) {
+			    throw WebDriverException::factory($results['status'], $message);
+		    }
+
+		    $sessionId = isset($results['sessionId'])
+			    ? $results['sessionId']
+			    : (isset($value['webdriver.remote.sessionid'])
+				    ? $value['webdriver.remote.sessionid']
+				    : null);
+
+		    return array(
+			    'value'      => $value,
+			    'info'       => $response->getHeaders(),
+			    'sessionId'  => $sessionId,
+			    'sessionUrl' => $sessionId ? $this->url . '/session/' . $sessionId : $url,
+		    );
+	    });
     }
 
     /**
@@ -160,7 +192,7 @@ abstract class AbstractWebDriver
      * @param string $name      Method name
      * @param array  $arguments Arguments
      *
-     * @return mixed
+     * @return PromiseInterface<mixed>
      *
      * @throws \WebDriver\Exception if invalid WebDriver command
      */
@@ -193,13 +225,14 @@ abstract class AbstractWebDriver
             );
         }
 
-        $results = $this->curl(
+        return $this->curl(
             $requestMethod,
             '/' . $webdriverCommand,
             array_shift($arguments)
-        );
+        )->then(function($results) {
+	        return $results['value'];
 
-        return $results['value'];
+        });
     }
 
     /**

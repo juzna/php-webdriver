@@ -23,6 +23,7 @@
 
 namespace WebDriver;
 
+use React\Promise\PromiseInterface;
 use WebDriver\Exception as WebDriverException;
 
 /**
@@ -51,7 +52,7 @@ abstract class Container extends AbstractWebDriver
      * @param string $using the locator strategy to use
      * @param string $value the search target
      *
-     * @return \WebDriver\Element
+     * @return PromiseInterface<\WebDriver\Element>
      *
      * @throws \WebDriver\Exception if element not found, or invalid XPath
      */
@@ -59,38 +60,39 @@ abstract class Container extends AbstractWebDriver
     {
         $locatorJson = $this->parseArgs('element', func_get_args());
 
-        try {
-            $results = $this->curl(
-                'POST',
-                '/element',
-                $locatorJson
-            );
-        } catch (WebDriverException\NoSuchElement $e) {
-            throw WebDriverException::factory(
-                WebDriverException::NO_SUCH_ELEMENT,
-                sprintf(
-                    "Element not found with %s, %s\n\n%s",
-                    $locatorJson['using'],
-		    $locatorJson['value'],
-                    $e->getMessage()
-                ),
-                $e
-            );
-        }
+        return $this->curl(
+            'POST',
+            '/element',
+            $locatorJson
+        )->then(
+            function($results) use ($locatorJson) {
+	            $element = $this->webDriverElement($results['value']);
 
-        $element = $this->webDriverElement($results['value']);
+	            if ($element === null) {
+		            throw WebDriverException::factory(WebDriverException::NO_SUCH_ELEMENT,
+			            sprintf(
+				            "Element not found with %s, %s\n",
+				            $locatorJson['using'],
+				            $locatorJson['value']
+			            )
+		            );
+	            }
 
-        if ($element === null) {
-            throw WebDriverException::factory(WebDriverException::NO_SUCH_ELEMENT,
-                sprintf(
-                    "Element not found with %s, %s\n",
-                    $locatorJson['using'],
-                    $locatorJson['value']
-                )
-            );
-        }
-
-        return $element;
+	            return $element;
+            },
+	        function($e) use ($locatorJson) { // TODO: WebDriverException\NoSuchElement
+		        throw WebDriverException::factory(
+			        WebDriverException::NO_SUCH_ELEMENT,
+			        sprintf(
+				        "Element not found with %s, %s\n\n%s",
+				        $locatorJson['using'],
+				        $locatorJson['value'],
+				        $e->getMessage()
+			        ),
+			        $e
+		        );
+	        }
+        );
     }
 
     /**
@@ -101,7 +103,7 @@ abstract class Container extends AbstractWebDriver
      * @param string $using the locator strategy to use
      * @param string $value the search target
      *
-     * @return array
+     * @return PromiseInterface<Element[]>
      *
      * @throws \WebDriver\Exception if invalid XPath
      */
@@ -109,19 +111,19 @@ abstract class Container extends AbstractWebDriver
     {
         $locatorJson = $this->parseArgs('elements', func_get_args());
 
-        $results = $this->curl(
+        return $this->curl(
             'POST',
             '/elements',
             $locatorJson
-        );
+        )->then(function($results) {
+	        if (!is_array($results['value'])) {
+	            return array();
+	        }
 
-        if (!is_array($results['value'])) {
-            return array();
-        }
-
-        return array_filter(array_map(
-            array($this, 'webDriverElement'), $results['value']
-        ));
+	        return array_filter(array_map(
+	            array($this, 'webDriverElement'), $results['value']
+	        ));
+        });
     }
 
     /**
