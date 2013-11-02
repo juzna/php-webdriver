@@ -24,7 +24,10 @@
     ],
     "require": {
         "php": ">=5.3.2",
-        "ext-curl": "*"
+        "ext-curl": "*",
+        "react/promise": "@dev",
+        "react/react": "dev-master",
+	    "juzna/flowphp": "dev-master"
     },
     "autoload": {
         "psr-0": {
@@ -38,5 +41,15 @@
     },
     "bin": [
         "bin/webunit"
-    ]
+    ],
+	"repositories": [
+		{
+			"type": "vcs",
+			"url": "https://github.com/juzna/react"
+		},
+		{
+			"type": "vcs",
+			"url": "https://github.com/juzna/flowphp"
+		}
+	]
 }
