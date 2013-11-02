@@ -2,7 +2,7 @@
 /**
  * Controlling selenium with promises
  */
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/bootstrap.php';
 
 
 // React services
@@ -23,7 +23,7 @@ flow(
 	function() {
 		$wd = new WebDriver\WebDriver("http://127.0.0.1:4444/wd/hub");
 		$session = (yield $wd->session());
-		yield $session->open('http://localhost/php-webdriver/page.php');
+		yield $session->open("$GLOBALS[baseUrl]/page.php");
 
 		$el = (yield $session->element('class name', 'seznam'));
 		yield $el->click();
@@ -35,7 +35,7 @@ flow(
 	function() {
 		$wd = new WebDriver\WebDriver("http://127.0.0.1:4444/wd/hub");
 		$session = (yield $wd->session());
-		yield $session->open('http://localhost/php-webdriver/page.php');
+		yield $session->open("$GLOBALS[baseUrl]/page.php");
 
 		$el = (yield $session->element('class name', 'seznam'));
 		yield $el->click();
@@ -47,7 +47,7 @@ flow(
 	function() {
 		$wd = new WebDriver\WebDriver("http://127.0.0.1:4444/wd/hub");
 		$session = (yield $wd->session());
-		yield $session->open('http://localhost/php-webdriver/page.php');
+		yield $session->open("$GLOBALS[baseUrl]/page.php");
 
 		$el = (yield $session->element('class name', 'seznam'));
 		yield $el->click();

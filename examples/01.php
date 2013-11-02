@@ -2,7 +2,7 @@
 /**
  * Controlling selenium with promises
  */
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/bootstrap.php';
 
 
 // React services
@@ -19,8 +19,8 @@ $httpClient = $httpClientFactory->create($eventLoop, $dnsResolver);
 
 $wd = new WebDriver\WebDriver("http://127.0.0.1:4444/wd/hub");
 $wd->session()
-	->then(function(WebDriver\Session $s) {
-		return $s->open('http://localhost/php-webdriver/page.php');
+	->then(function(WebDriver\Session $s) use ($baseUrl) {
+		return $s->open("$baseUrl/page.php");
 	})
 	->then(function(WebDriver\Session $s) {
 		return $s->element('class name', 'seznam');

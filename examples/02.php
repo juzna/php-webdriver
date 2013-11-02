@@ -2,7 +2,7 @@
 /**
  * Controlling selenium with promises
  */
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/bootstrap.php';
 
 
 // React services
@@ -17,10 +17,10 @@ $httpClient = $httpClientFactory->create($eventLoop, $dnsResolver);
 Flow\Flow::register(new Flow\Schedulers\HorizontalScheduler($eventLoop));
 
 
-flow(function() {
+flow(function() use ($baseUrl) {
 	$wd = new WebDriver\WebDriver("http://127.0.0.1:4444/wd/hub");
 	$session = (yield $wd->session());
-	yield $session->open('http://localhost/php-webdriver/page.php');
+	yield $session->open("$baseUrl/page.php");
 
 	$el = (yield $session->element('class name', 'seznam'));
 	yield $el->click();
