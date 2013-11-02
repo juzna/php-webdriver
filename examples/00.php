@@ -1,6 +1,9 @@
 <?php
 /**
  * Normal blocking selenium
+ *
+ * WARN: this example won't work, it shows the code without Promises
+ * (i.e. usage of the original version)
  */
 require_once __DIR__ . '/../vendor/autoload.php';
 
